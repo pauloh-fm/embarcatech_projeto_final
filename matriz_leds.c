@@ -5,9 +5,16 @@
 #include <stdio.h>
 #include "dados_lavouras.h"
 
-
+// Variável global para indicar qual gaiola está sendo exibida (1 a 4)
 extern uint8_t gaiola_atual;
+
+
+// Mapeamento para as gaiolas na visualização da lavoura
+static const uint8_t lavoura_gaiola_indices[4] = {2, 10, 14, 22};
+
+// Mapeamento para as gaiolas na visualização da gaiola (já definido anteriormente)
 static const uint8_t gaiola_indices[4] = {7, 11, 13, 17};
+
 // Definição de pixel no formato GRB (ordem exigida pelo WS2812B)
 struct pixel_t {
     uint8_t G, R, B;
@@ -34,13 +41,11 @@ uint sm;
 #define COLOR_G_IDLE_B  255
 
 // Portão ('P'): azul (fechado)
-// (Quando o portão estiver aberto, pode ser considerado OFF)
 #define COLOR_P_R  0
 #define COLOR_P_G  0
 #define COLOR_P_B  255
 
-// Detecção de animal ('A'): vermelho (quando ativo)
-// Se não estiver detectando, pode ser apagado (OFF)
+// Detecção de animal ('A'): vermelho
 #define COLOR_A_R  255
 #define COLOR_A_G  0
 #define COLOR_A_B  0
@@ -109,9 +114,13 @@ int obterIndice(uint x, uint y) {
  * - 'G' (Gaiola): cor azul (estado normal);
  * - 'T' (Sensor): cor amarelo;
  * - Outros (incluindo ' '): LED apagado.
+ *
+ * Após exibir o padrão base, sobrescreve os LEDs das gaiolas (mapa definido em lavoura_gaiola_indices)
+ * para aqueles que possuem animal detectado (ANIMAIS_DETECTADOS[i] == 1), exibindo-os em vermelho.
  */
 void exibirLavoura(void) {
     npClear();
+    // Exibe o padrão base
     for (int i = 0; i < LED_COUNT; i++) {
         uint8_t r, g, b;
         switch (lavoura_leds[i].tipo) {
@@ -130,6 +139,15 @@ void exibirLavoura(void) {
         int indice = obterIndice(lavoura_leds[i].x, lavoura_leds[i].y);
         npSetLED(indice, r, g, b);
     }
+    
+    // Sobrescreve as cores das gaiolas com animal detectado (de acordo com ANIMAIS_DETECTADOS)
+    for (int i = 0; i < 4; i++) {
+        if (ANIMAIS_DETECTADOS[i] == 1) {
+            int idx = lavoura_gaiola_indices[i];
+            int indice = obterIndice(lavoura_leds[idx].x, lavoura_leds[idx].y);
+            npSetLED(indice, COLOR_A_R, COLOR_A_G, COLOR_A_B);
+        }
+    }
     npWrite();
 }
 
@@ -140,12 +158,12 @@ void exibirLavoura(void) {
  * - 'A': sensor de detecção de animal – se ativo, exibido em vermelho; caso contrário, apagado.
  * - Outros: LED apagado.
  *
- * Aqui, para simulação, consideramos que a detecção de animal está ativa e, portanto, o LED do
- * tipo 'A' será exibido em vermelho.
+ * Nesta função, o LED do tipo 'A' será exibido em vermelho somente se
+ * ANIMAIS_DETECTADOS[gaiola_atual - 1] for 1. Se não, o LED fica apagado.
  */
 void exibirGaiola(void) {
     npClear();
-    // Exibe o padrão de gaiola usando o array gaiola_leds
+    // Exibe o padrão base da gaiola
     for (int i = 0; i < LED_COUNT; i++) {
         uint8_t r, g, b;
         switch (gaiola_leds[i].tipo) {
@@ -156,8 +174,12 @@ void exibirGaiola(void) {
                 r = COLOR_P_R; g = COLOR_P_G; b = COLOR_P_B;
                 break;
             case 'A':
-                // Se houver detecção, será vermelho (caso contrário, pode ficar apagado)
-                r = COLOR_A_R; g = COLOR_A_G; b = COLOR_A_B;
+                // Se a gaiola atual tem animal detectado, exibe vermelho; caso contrário, apaga
+                if (ANIMAIS_DETECTADOS[gaiola_atual - 1] == 1) {
+                    r = COLOR_A_R; g = COLOR_A_G; b = COLOR_A_B;
+                } else {
+                    r = COLOR_OFF_R; g = COLOR_OFF_G; b = COLOR_OFF_B;
+                }
                 break;
             default:
                 r = COLOR_OFF_R; g = COLOR_OFF_G; b = COLOR_OFF_B;
@@ -165,10 +187,5 @@ void exibirGaiola(void) {
         int indice = obterIndice(gaiola_leds[i].x, gaiola_leds[i].y);
         npSetLED(indice, r, g, b);
     }
-    
-    // Destaca a gaiola selecionada, sobrescrevendo o LED correspondente com a cor de detecção (vermelho)
-    int idx = gaiola_indices[gaiola_atual - 1];
-    int indice = obterIndice(gaiola_leds[idx].x, gaiola_leds[idx].y);
-    npSetLED(indice, COLOR_A_R, COLOR_A_G, COLOR_A_B);
     npWrite();
 }

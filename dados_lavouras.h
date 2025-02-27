@@ -5,7 +5,10 @@
 #include <stddef.h>
 
 #define LED_COUNT 25
-
+// Declaração global: vetor com 4 elementos (0 = não detectado, 1 = detectado)
+extern uint8_t ANIMAIS_DETECTADOS[4];
+extern uint8_t atual_animais_detectados;
+extern uint8_t estado_portao_gaiola[4];
 // Estrutura que define um elemento da matriz: coordenadas e função
 typedef struct {
     uint8_t x;
