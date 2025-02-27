@@ -1,7 +1,9 @@
-# Sistema Microcontrolado de Controle e Monitoramento de Lavouras
+# Sistema Microcontrolado de Controle e Monitoramento de Lavouras para o combate de animais de pequeno e médio porte
 
 **Autor:** Paulo Henrique de Farias Martins
-
+## Utilização
+**Comunicação via USB Serial**  
+- Utilize o serial monitor para acessar o menu e utilizar o sistema.
 ## Funcionalidades
 
 ✅ **Detecção de Animais nas Gaiolas via Sensores Simulados**  
